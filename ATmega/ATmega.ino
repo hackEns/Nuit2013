@@ -68,14 +68,15 @@ void serialEvent() {
     
     if(highByte(incoming_byte)) {
       // Header
-      if(incoming_byte & B00011111 == 0) {
+      int compteur = incoming_byte & B00011111;
+      if(compteur == 0) {
         // Compteur nul => on le note à traiter grâce à serial_i
         //Note : [Unused] serial_fonction = (incoming_byte >> 5) & B011;
         serial_i = 0;
       }
       else {
         // Forward
-        Serial.print((incoming_byte & B11100000) | ((incoming_byte & B00011111) -1)); // Décrément du compteur
+        Serial.print((incoming_byte & B11100000) | (incoming_byte & B00011111 - 1)); // Décrément du compteur
       }
       
       if(incoming_byte && B01100000 == 2) {
