@@ -68,15 +68,14 @@ void serialEvent() {
     
     if(highByte(incoming_byte)) {
       // Header
-      int compteur = incoming_byte & B00011111;
-      if(compteur == 0) {
-        // Compteur nul => on le note à traiter grâce à serial_i
-        //Note : [Unused] serial_fonction = (incoming_byte >> 5) & B011;
-        serial_i = 0;
-      }
-      else {
+      int serial_i = incoming_byte & B00011111; // serial_i = compteur
+      // Note: serial_i = 0 => à traiter
+      
+      // Note : [Unused] serial_fonction = (incoming_byte >> 5) & B011;
+      
+      if(serial_i != 0) {
         // Forward
-        Serial.print((incoming_byte & B11100000) | (incoming_byte & B00011111 - 1)); // Décrément du compteur
+        Serial.print((incoming_byte & B11100000) | (serial_i - 1)); // Décrément du compteur
       }
       
       if(incoming_byte && B01100000 == 2) {
@@ -88,7 +87,7 @@ void serialEvent() {
       // Paquet de couleur
       if(serial_i != -1) {
         // Si on doit traiter le paquet, on le fait
-        duty[serial_i] = (incoming_byte & B01111111) >> 2;
+        duty[serial_i] = (incoming_byte & B01111111) << 1;
         serial_i++;
       }
       else {
