@@ -12,13 +12,20 @@ Paquets serial :
 [compteur] => 5 bits
     ===
 [synchro = 0]
-[couleurR] => 7 bits => 0, 128 (limité à 127)
+[couleurR] => 7 bits
     ===
 [synchro = 0]
-[couleurG] => 7 bits => 0, 128 (limité à 127)
+[couleurG] => 7 bits
     ===
 [synchro = 0]
-[couleur B] => 7 bits => 0, 128 (limité à 127)
+[couleur B] => 7 bits
+
+Fonctions :
+===========
+0 => Switch immédiat
+1 => Fade in
+2 => Broadcast => applique le paquet et le forward quand même
+3 => Automatique
 */
 
 #define R 0
@@ -69,6 +76,11 @@ void serialEvent() {
       else {
         // Forward
         Serial.print((incoming_byte & B11100000) | ((incoming_byte & B00011111) -1)); // Décrément du compteur
+      }
+      
+      if(incoming_byte && B01100000 == 2) {
+        // Broadcast
+        Serial.print(incoming_byte & B11100000); // Forward avec compteur nul
       }
     }
     else {
