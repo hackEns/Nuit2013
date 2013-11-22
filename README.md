@@ -6,3 +6,4 @@ Codes, schematics etc. pour l'installation de LEDs (montage Ledhill) pour la Nui
 # Files
 
 * test/ : test programs
+* ATmega/ : the code running on the ATmegas 8
