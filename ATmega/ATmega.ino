@@ -95,6 +95,6 @@ void serialEvent() {
         Serial.print(incoming_byte);
       }
     }
-    serial_i = -1;
   }
+  serial_i = -1;
 }
