@@ -79,7 +79,7 @@ void serialEvent() {
         serial_i = -1
       }
       
-      if(incoming_byte && B01100000 == 2) {
+      if(incoming_byte & B01100000 == B01000000) {
         // Broadcast
         Serial.print(incoming_byte & B11100000); // Forward avec compteur nul
       }
@@ -88,7 +88,7 @@ void serialEvent() {
       // Paquet de couleur
       if(serial_i != -1) {
         // Si on doit traiter le paquet, on le fait
-        duty[serial_i] = (incoming_byte & B01111111) << 1;
+        duty[serial_i] = incoming_byte << 1;
         serial_i++;
       }
       else {
