@@ -1,7 +1,7 @@
 #define R 0
 #define G 1
 #define B 2
-const int pins[3] = {15, 16, 17};
+const int pins[3] = {9, 10, 11};
 
 #define SERIAL_SPEED 115200
 

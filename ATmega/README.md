@@ -5,9 +5,9 @@ Quelques notes sont regroupées ci-dessous.
 
 ## Pins
 
-* 15 : Led R
-* 16 : Led G
-* 17 : Led B
+* 15 (datasheet ATmel) == 9 (Arduino) : Led R
+* 16 (datasheet ATmel) == 10 (Arduino) : Led G
+* 17 (datasheet ATmel) == 11 (Arduino) : Led B
 
 ## Paquets serial
 
