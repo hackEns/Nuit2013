@@ -10,6 +10,11 @@ byte incoming_byte;
 
 void setup() {
     Serial.begin(SERIAL_SPEED);
+
+    // Led R to show that microcontroller is ready
+    analogWrite(pins[R], 255);
+    analogWrite(pins[G], 0);
+    analogWrite(pins[B], 0);
 }
 
 void loop() {
@@ -17,13 +22,13 @@ void loop() {
         incoming_byte = (byte) Serial.read();
 
         // Header
-        if(highByte(incoming_byte)) {
+        if(incoming_byte & B10000000) {
             serial_i = incoming_byte & B00111111;
 
             // Forward avec décrément du compteur
             if(serial_i != 0) {
                 Serial.print((incoming_byte & B11000000) | (serial_i - 1));
-                serial_i = -1
+                serial_i = -1;
             }
 
             // Broadcast
