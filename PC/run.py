@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #----------------------------------------------------------------------------
 # Name:         run.py
 # Purpose:      Simple framework for running individual demos
@@ -159,4 +159,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-

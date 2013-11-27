@@ -3,13 +3,14 @@
 # TODO 
 # - titre
 # - prevoir le fondu en lsv 
-# - actions
-# - 
+# - reecrire l'equivalent de run.py dans ce fichier 
+# (grosso-modo, ajouter la gestion de la fenetre)
 
-import  wx
-import  wx.lib.colourselect as  csel
+import wx
+import wx.lib.colourselect as csel
+import time
 
-#----------------------------------------------------------------------------
+import mod
 
 class TestColourSelect(wx.Panel):
     
@@ -36,24 +37,26 @@ class TestColourSelect(wx.Panel):
     customColors.extend(
         [defaultColor for i in range(len(customColors), customColorsNumber)]
         ) # Ajouter le bon nombre de "defaut" pour que la liste soit de la bonne taille
-    print customColors
 
+    customColorsButtons = []
 
     # Pour stocker les boutons, on utilise une liste comme un tableau
     buttons = [] 
 
+    currentColorButton = None
 
     currentFrame = 1
-    currentFrameSpin = 0 # Dummy value
-    maxFrameSpin = 0 # Dummy
+    currentFrameSpin = None
+    maxFrameSpin = None
 
-    blendTimeSpin = 0 # Dummy
-    blendFramesSpin = 0 # Dummy
+    blendTimeSpin = None
+    blendFramesSpin = None
 
-    copyFrameSpin = 0 # Dummy
+    copyFrameSpin = None
 
     values = {}
-
+    
+    currentPath = ""
 
     def __init__(self, parent, log):
         self.log = log
@@ -64,17 +67,25 @@ class TestColourSelect(wx.Panel):
         t = wx.StaticText(self, -1,
                           "Select color for each frame to create an animation (frame 1 to <Last frame>).\n"
                           "Between two consecutive frames, the light is gradually modified by a color blend\n"
-                          "of TODO"
+                          "of the specified number of additional frames. Set 0 additional frames for a simple\n"
+                          "transition with no blend at all.\n"
+                          "On every color button, clicks have following effects:\n"
+                          "- left click: opens a color choice menu\n"
+                          "- middle click: replace hovered button color with 'current' color\n"
+                          "- right click: replace 'current' color with hovered button color\n"
                           )
         mainSizer.Add(t, 0, wx.ALL, 3)
 
+
+        # Bouton de la couleur courante (on a besoin de le creer en avance)
+        self.currentColorButton = csel.ColourSelect(self, -1, "", self.defaultColor, 
+                                                    size = wx.DefaultSize)
 
         # b = wx.Button(self, -1, "Show All Colours")
         # self.Bind(wx.EVT_BUTTON, self.OnShowAll, id=b.GetId())
         # mainSizer.Add(b, 0, wx.ALL, 3)
 
         # Bouton de selection de la frame
-        # TODO : on modified => last augmente
         frameSelectionSizer = wx.BoxSizer(wx.HORIZONTAL)
         mainSizer.Add(frameSelectionSizer)
         
@@ -95,6 +106,11 @@ class TestColourSelect(wx.Panel):
         sc.SetValue(1)
         frameSelectionSizer.Add(sc, 0, wx.ALL, 3)
         self.Bind(wx.EVT_SPINCTRL, self.OnSpin, sc)
+
+        b = wx.Button(self, -1, "Play animation") 
+        self.Bind(wx.EVT_BUTTON, self.OnPlayAnimation, id=b.GetId())
+        frameSelectionSizer.Add(b, 0, wx.ALL, 3)
+
 
         
         # Frame copying
@@ -168,9 +184,11 @@ class TestColourSelect(wx.Panel):
         customColorsSizer = wx.BoxSizer(wx.HORIZONTAL)
         mainSizer.Add(customColorsSizer, 0, wx.ALL, 3)
 
-        self.customColorsButtons = range(0, self.customColorsNumber)
+        self.customColorsButtons = [None for i in range(0, self.customColorsNumber)]
         for i in range(0, self.customColorsNumber):
-            b = csel.ColourSelect(self, -1, "", self.customColors[i], size = wx.DefaultSize)
+            b = mod.ModColourSelect(self, -1, "", self.customColors[i], wx.DefaultSize,
+                                    self.currentColorButton.GetColour, 
+                                    self.currentColorButton.SetColour)
             self.customColorsButtons[i] = b
             
             b.Bind(csel.EVT_COLOURSELECT, self.OnSelectColour)
@@ -187,7 +205,7 @@ class TestColourSelect(wx.Panel):
         mainSizer.Add(currentColorSizer, 0, wx.ALL, 3)
         
         currentColorSizer.Add(wx.StaticText(self, -1, "Current color:"), 0, wx.ALL, 3)
-        b = csel.ColourSelect(self, -1, "", self.defaultColor, size = wx.DefaultSize)
+        b = self.currentColorButton # Deja cree
         # b.Bind(csel.EVT_COLOURSELECT, self.OnSelectColour)
         currentColorSizer.Add(b)
 
@@ -201,7 +219,7 @@ class TestColourSelect(wx.Panel):
         
         currentColorSizer.Add(wx.StaticText(self, -1, "(included) to"), 0, wx.ALL, 3)
         sc = wx.SpinCtrl(self, -1, "", (30, 50))
-        self.rangeBeginSpin = sc
+        self.rangeEndSpin = sc
         sc.SetRange(1, self.ledNumber)
         sc.SetValue(1)
         currentColorSizer.Add(sc, 0, wx.ALL, 3)
@@ -209,22 +227,41 @@ class TestColourSelect(wx.Panel):
         currentColorSizer.Add(wx.StaticText(self, -1, "(included)"), 0, wx.ALL, 3)
 
         b = wx.Button(self, -1, "Paste") 
-        # TODO
-        # self.Bind(wx.EVT_BUTTON, self.OnCreateRange, id=b.GetId())
+        self.Bind(wx.EVT_BUTTON, self.OnMakeRange, id=b.GetId())
         currentColorSizer.Add(b, 0, wx.ALL, 3)
 
-        
+
+        # Boutons d'actions
+        actionsSizer = wx.BoxSizer(wx.HORIZONTAL)
+        mainSizer.Add(actionsSizer, 0, wx.ALL, 3)
+
+        b = wx.Button(self, -1, "Open") 
+        self.Bind(wx.EVT_BUTTON, self.OnOpen, id=b.GetId())
+        actionsSizer.Add(b, 0, wx.ALL, 3)
+
+        b = wx.Button(self, -1, "Save as") 
+        self.Bind(wx.EVT_BUTTON, self.OnSaveAs, id=b.GetId())
+        actionsSizer.Add(b, 0, wx.ALL, 3)
+
+        b = wx.Button(self, -1, "Save") 
+        self.Bind(wx.EVT_BUTTON, self.OnSave, id=b.GetId())
+        actionsSizer.Add(b, 0, wx.ALL, 3)
+
 
         self.Layout()
+        mainSizer.Fit(self)
 
         
 
     def BuildButtons(self, colorSizer):
-        self.buttons = range(0, self.ledNumber)
+        self.buttons = [None for i in range(0, self.ledNumber)]
 
         def f(l, sizer):
             for i in l:
-                b = csel.ColourSelect(self, -1, str(i), self.defaultColor, size = wx.DefaultSize)
+                b = mod.ModColourSelect(self, -1, str(i), self.defaultColor, wx.DefaultSize,
+                                        self.currentColorButton.GetColour, 
+                                        self.currentColorButton.SetColour)
+
                 self.buttons[i - 1] = b
 
                 b.Bind(csel.EVT_COLOURSELECT, self.OnSelectColour)
@@ -255,7 +292,7 @@ class TestColourSelect(wx.Panel):
                               self.defaultBlendTime, self.defaultBlendFrames)
 
 
-    def saveCurrentValues(self):
+    def saveCurrentFrame(self):
         self.values[self.currentFrame] = (self.getColors(),
                                           self.blendTimeSpin.GetValue(),
                                           self.blendFramesSpin.GetValue()
@@ -277,17 +314,23 @@ class TestColourSelect(wx.Panel):
         self.blendTimeSpin.SetValue(blendTime)
         self.blendFramesSpin.SetValue(blendFrames)
 
+        self.currentFrame = frame
+        
         print "Loaded ",
         print self.values[frame],
         print "for frame " + str(frame)
 
 
+    def writeValues(self, output):
+        None # TODO
+
+
     def OnCurrentFrameSelected(self, event):
-        self.saveCurrentValues()
+        self.saveCurrentFrame()
         # TODO : load
         self.loadValues(self.currentFrameSpin.GetValue())
 
-        self.currentFrame = self.currentFrameSpin.GetValue()
+        #self.currentFrame = self.currentFrameSpin.GetValue()
 
         if (self.maxFrameSpin.GetValue() < self.currentFrame) :
             self.maxFrameSpin.SetValue(self.currentFrame)
@@ -309,28 +352,126 @@ class TestColourSelect(wx.Panel):
         else:
             print "Error, no information stored about frame " + str(target)
 
-    # def OnShowAll(self, event):
-    #     # show the state of each button
-    #     result = []
-    #     colour = self.colourDefaults.GetColour() # default control value
-    #     result.append("Default Colour/Size: " + str(colour))
-
-    #     for name, button in self.buttonRefs:
-    #         colour = button.GetColour() # get the colour selection button result
-    #         result.append(name + ": " + str(colour))  # create string list for easy viewing of results
-
-    #     out_result = ',  '.join(result)
-    #     self.log.WriteText("Colour Results: " + out_result + "\n")
-
 
 
     def OnSpin(self, evt):
-        # TODO
+        # FIXME : sert a qqchose ?
         []
         
 
 
+    def OnPlayAnimation(self, evt):
+        self.saveCurrentFrame()
 
+        # TODO
+        for frame in range(1, self.maxFrameSpin.GetValue() + 1):
+            self.loadValues(frame)
+
+            self.currentFrameSpin.SetValue(frame)
+
+            self.Update()
+            
+            # TODO : faire les frames intermediaires
+            (_, s, _) = self.values[frame]
+            time.sleep(s / 1000.0)
+
+
+
+
+    def OnOpen(self, evt):
+        # TODO : gerer le contenu non-sauvegarde
+        openFileDialog = wx.FileDialog(self,  "Open LNA file", "", "",
+                                       "LedNuit Animation files (*.lna)|*.lna", 
+                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+
+        if openFileDialog.ShowModal() == wx.ID_CANCEL:
+            return     # Annule
+
+
+        self.currentPath = openFileDialog.GetPath() 
+        
+
+        f = open(self.currentPath, 'r')
+
+        self.loadFromFile(f)
+
+        f.close()
+
+
+
+    def AskSavePath(self):
+        saveFileDialog = wx.FileDialog(self, "Open LNA file", "", "",
+                                       "LedNuit Animation files (*.lna)|*.lna", 
+                                       wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        
+        if saveFileDialog.ShowModal() == wx.ID_CANCEL:
+            return False
+
+        path = saveFileDialog.GetPath()
+
+        if not path.endswith(".lna"):
+            path += ".lna"
+
+
+        self.currentPath = path
+        print "Write to: " + path
+
+        return True
+        
+    def OnSaveAs(self, evt):
+        if(self.AskSavePath()):
+            self.OnSave(evt)
+
+        
+    def OnSave(self, event):
+        self.saveCurrentFrame()
+
+        if self.currentPath == "":
+            if not self.AskSavePath():
+                return # On ne nous a pas donne de path
+
+        
+        f = open(self.currentPath, 'w')
+
+        self.writeToFile(f)
+
+        f.close()
+
+
+
+    def OnMakeRange(self, event):
+        begin = self.rangeBeginSpin.GetValue()
+        end = self.rangeEndSpin.GetValue()
+
+        color = self.currentColorButton.GetColour()
+
+        for i in range(begin, end + 1):
+            self.buttons[i - 1].SetColour(color)
+
+
+    def writeToFile(self, f):
+        # On indique le format, juste au cas ou on veuille le modifier plus tard
+        f.write("Format:1\n")
+
+        for frame in range(1, self.maxFrameSpin.GetValue() + 1):
+            f.write(repr(self.values[frame]) + "\n")
+
+    # TODO : attention, cette fonction plante probablement assez salement sur des mauvais fichiers
+    def loadFromFile(self, f):
+        # Pour l'instant, on n'utilise pas la ligne de format
+        f.readline()
+
+        frame = 0
+        
+        for line in f:
+            frame += 1
+            # FIXME : attention, on fait un simple eval... Pas tres robuste...
+            self.values[frame] = eval(line)
+
+        self.currentFrameSpin.SetValue(1)
+        self.maxFrameSpin.SetValue(frame)
+
+        self.loadValues(1)
 
 #---------------------------------------------------------------------------
 
