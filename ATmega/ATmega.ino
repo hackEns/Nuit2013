@@ -27,13 +27,13 @@ void loop() {
 
             // Forward avec décrément du compteur
             if(serial_i != 0) {
-                Serial.print((incoming_byte & B11000000) | (serial_i - 1));
+                Serial.write((incoming_byte & B11000000) | (serial_i - 1));
                 serial_i = -1;
             }
 
             // Broadcast
             if(incoming_byte & B01000000 == B01000000) {
-                Serial.print(incoming_byte & B11000000);
+                Serial.write(B11000000);
             }
         }
         // Paquet de couleur
@@ -43,7 +43,7 @@ void loop() {
                 serial_i++;
             }
             else {
-                Serial.print(incoming_byte);
+                Serial.write(incoming_byte);
             }
         }
     }
