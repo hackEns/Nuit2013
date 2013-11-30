@@ -6,8 +6,6 @@ int compteur = -1;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(SERIAL_SPEED);
-  Serial1.begin(SERIAL_SPEED);
-  Serial2.begin(SERIAL_SPEED);
 }
 
 void loop() {
@@ -21,28 +19,14 @@ void loop() {
       
       // Si compteur <= 12, forward sur Serial1 (0..12)
       if(compteur <= 12) {
-        Serial1.print(incoming_byte);
-      }
-      // Si compteur > 12, forward sur Serial2 (13..25)
-      else {
-        Serial2.print((incoming_byte & B11000000) | (compteur - 13));
-      }
-      
-      // Si broadcast, forward sur Serial1 et Serial2
-      if(incoming_byte & B01000000 == B01000000) {
-          Serial1.print(incoming_byte & B11000000);
-          Serial2.print((incoming_byte & B11000000) | (compteur - 13));
+        Serial.print(incoming_byte);
       }
     }
     // Paquet de couleur
     else {
       // Si compteur <= 12, forward sur Serial1
       if(compteur <= 12) {
-        Serial1.print(incoming_byte);
-      }
-      // Si compteur > 12, forward sur Serial2
-      else {
-        Serial2.print((incoming_byte & B11000000) | (compteur - 13));
+        Serial.print(incoming_byte);
       }
     }
   }
