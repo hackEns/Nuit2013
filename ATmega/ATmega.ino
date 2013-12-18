@@ -27,12 +27,12 @@ void loop() {
 
             // Forward avec décrément du compteur
             if(serial_i != 0) {
-                Serial.write((incoming_byte & B11000000) | (serial_i - 1));
+                Serial.write(incoming_byte - 1);
                 serial_i = -1;
             }
 
             // Broadcast
-            if(incoming_byte & B01000000 == B01000000) {
+            if((incoming_byte & B01000000) == B01000000) {
                 Serial.write(B11000000);
             }
         }
