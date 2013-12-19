@@ -30,8 +30,8 @@ blue_coeff = 1.0
 
 first_led_index = 0
 
-serial_port = '/dev/ttyACM0'
-#serial_port = '/dev/ttyUSB0'
+#serial_port = '/dev/ttyACM0'
+serial_port = '/dev/ttyUSB0'
 #serial_port = '/dev/ttyS0'
 
 
@@ -52,11 +52,10 @@ def get_corrected_color(r, g, b):
 def send_color(id, (r, g, b)):
     data = [0x80 + id] # Header
     data.extend(get_corrected_color(r, g, b))
+    #print data
     for i in data:
         ser.flushInput()
         ser.write(chr(i))
-        print chr(i)
-        time.sleep(0.01)
         None
     # TODO : time.sleep(0.01) ?
 

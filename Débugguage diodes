@@ -1,16 +1,13 @@
 Diodes numérotées binairement derrière, par de l'étain (poids faibles en bord de pcb). (à voir si c'est compréhensible.
-#1 OK
+#1 Pb avec le rouge
 #2 OK
 #3 OK
 #4 OK
 #5 OK
 #6 Le bleu ne marche pas ; autres couleurs ok
-
-Câble data soudé directement sur #7 #a8 #9
 #7 Fuites sur les leds
 #8 OK
 #9 OK
-
 #10 Le vert s'allume au bon moment mais il reste tjrs rouge et bleu en fond
 #11 idem
 #12 OK
@@ -30,4 +27,8 @@ Câble data soudé directement sur #7 #a8 #9
 
 Les atmega de test rvb sont sur #7 et #22
 
-19 atmegas dans la boîte noire ?
+Câble data soudé directement sur
+#1 #8 #9
+#4 #3 #15
+#2 #18 #14 #16
+19 atmegas dans la boîte noire
